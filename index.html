@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Карточки — база знаний</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg-secondary: #f7f7f5;
+      --bg-tertiary: #f0efe9;
+      --text: #1a1a18;
+      --text-secondary: #6b6b67;
+      --text-tertiary: #a0a09c;
+      --border: rgba(0,0,0,0.1);
+      --border-secondary: rgba(0,0,0,0.18);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --font: 'Inter', system-ui, sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1c1c1a;
+        --bg-secondary: #252523;
+        --bg-tertiary: #2e2e2b;
+        --text: #f0efe9;
+        --text-secondary: #9b9b96;
+        --text-tertiary: #6b6b67;
+        --border: rgba(255,255,255,0.1);
+        --border-secondary: rgba(255,255,255,0.18);
+      }
+    }
+
+    html { font-size: 16px; }
+    body {
+      font-family: var(--font);
+      background: var(--bg-tertiary);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container { max-width: 720px; margin: 0 auto; }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .app-logo { font-size: 20px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+    .app-logo i { font-size: 22px; color: var(--text-secondary); }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+    }
+    .section-title { font-size: 18px; font-weight: 500; }
+    .section-meta { font-size: 13px; color: var(--text-secondary); }
+
+    .add-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg);
+      border: 0.5px solid var(--border-secondary);
+      border-radius: var(--radius-md);
+      padding: 8px 16px;
+      font-size: 14px;
+      font-family: var(--font);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .add-btn:hover { background: var(--bg-secondary); }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 6px 12px;
+      font-size: 13px;
+      font-family: var(--font);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .back-btn:hover { background: var(--bg-secondary); }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+    .top-bar-title { font-size: 18px; font-weight: 500; }
+
+    /* Topics grid */
+    .topics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 12px;
+    }
+    .topic-card {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.12s;
+    }
+    .topic-card:hover { border-color: var(--border-secondary); transform: translateY(-1px); }
+    .topic-icon { font-size: 24px; color: var(--text-secondary); margin-bottom: 12px; }
+    .topic-name { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+    .topic-count { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
+    .progress-track { height: 3px; background: var(--bg-tertiary); border-radius: 99px; overflow: hidden; margin-bottom: 12px; }
+    .progress-fill { height: 3px; background: var(--text-tertiary); border-radius: 99px; transition: width 0.3s; }
+    .topic-footer { display: flex; justify-content: flex-end; }
+    .del-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-tertiary);
+      font-size: 15px;
+      padding: 2px 4px;
+      border-radius: 4px;
+    }
+    .del-btn:hover { color: #c0392b; background: #fdf0ef; }
+
+    /* Cards list */
+    .cards-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .q-card {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .q-card.open { border-color: var(--border-secondary); }
+
+    .q-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      gap: 12px;
+      transition: background 0.12s;
+    }
+    .q-card-header:hover { background: var(--bg-secondary); }
+
+    .q-question { font-size: 15px; line-height: 1.5; flex: 1; }
+    .q-chevron {
+      color: var(--text-tertiary);
+      font-size: 16px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      transition: transform 0.2s;
+    }
+    .q-card.open .q-chevron { transform: rotate(180deg); }
+
+    .q-answer-wrap {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .q-card.open .q-answer-wrap { max-height: 2000px; }
+
+    .q-answer {
+      border-top: 0.5px solid var(--border);
+      padding: 1rem 1.25rem 1.25rem;
+    }
+    .q-answer-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 0.6rem;
+    }
+    .q-answer-text {
+      font-size: 15px;
+      line-height: 1.8;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+    .q-card-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 0.5px solid var(--border);
+    }
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: none;
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 5px 10px;
+      font-size: 13px;
+      font-family: var(--font);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .icon-btn:hover { background: var(--bg-secondary); border-color: var(--border-secondary); }
+    .icon-btn.danger:hover { color: #c0392b; background: #fdf0ef; border-color: #f5c6c6; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 1rem;
+      color: var(--text-tertiary);
+    }
+    .empty-state i { font-size: 40px; display: block; margin-bottom: 1rem; }
+    .empty-state p { font-size: 14px; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 1rem;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal {
+      background: var(--bg);
+      border: 0.5px solid var(--border-secondary);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      width: min(540px, 100%);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-title { font-size: 16px; font-weight: 500; margin-bottom: 1.25rem; }
+    .field-label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+    .field-input {
+      width: 100%;
+      border: 0.5px solid var(--border-secondary);
+      border-radius: var(--radius-md);
+      padding: 9px 12px;
+      font-size: 14px;
+      font-family: var(--font);
+      background: var(--bg-secondary);
+      color: var(--text);
+      margin-bottom: 1rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field-input:focus { border-color: var(--text-tertiary); }
+    .field-textarea {
+      width: 100%;
+      border: 0.5px solid var(--border-secondary);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: var(--font);
+      background: var(--bg-secondary);
+      color: var(--text);
+      resize: vertical;
+      min-height: 180px;
+      line-height: 1.7;
+      margin-bottom: 1rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field-textarea:focus { border-color: var(--text-tertiary); }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .btn-primary {
+      background: var(--text);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 8px 20px;
+      font-size: 14px;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: opacity 0.12s;
+    }
+    .btn-primary:hover { opacity: 0.82; }
+    .btn-cancel {
+      background: none;
+      border: 0.5px solid var(--border-secondary);
+      border-radius: var(--radius-md);
+      padding: 8px 16px;
+      font-size: 14px;
+      font-family: var(--font);
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .btn-cancel:hover { background: var(--bg-secondary); }
+
+    @media (max-width: 480px) {
+      .topics-grid { grid-template-columns: 1fr 1fr; }
+      .q-answer-text { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="app-header">
+      <div class="app-logo"><i class="ti ti-cards" aria-hidden="true"></i> Карточки</div>
+    </header>
+
+    <!-- Topics screen -->
+    <div id="screen-topics" class="screen active">
+      <div class="section-header">
+        <span class="section-title">Мои темы</span>
+        <button class="add-btn" onclick="openModal('topic')">
+          <i class="ti ti-plus" aria-hidden="true"></i> Новая тема
+        </button>
+      </div>
+      <div class="topics-grid" id="topics-grid"></div>
+    </div>
+
+    <!-- Cards screen -->
+    <div id="screen-cards" class="screen">
+      <div class="top-bar">
+        <button class="back-btn" onclick="showTopics()">
+          <i class="ti ti-arrow-left" aria-hidden="true"></i> Темы
+        </button>
+        <span class="top-bar-title" id="cards-screen-title"></span>
+      </div>
+      <div class="section-header">
+        <span class="section-meta" id="cards-count-label"></span>
+        <button class="add-btn" onclick="openModal('card')">
+          <i class="ti ti-plus" aria-hidden="true"></i> Добавить карточку
+        </button>
+      </div>
+      <div class="cards-list" id="cards-list"></div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay hidden" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-title" id="modal-title"></div>
+      <div id="modal-body"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Отмена</button>
+        <button class="btn-primary" onclick="confirmModal()" id="modal-confirm">Создать</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let topics = JSON.parse(localStorage.getItem('flashcards_data') || '[]');
+    let currentTopicId = null;
+    let modalMode = null;
+    let editCardId = null;
+
+    const ICONS = ['ti-book','ti-math','ti-flask','ti-code','ti-language',
+                   'ti-history','ti-bulb','ti-world','ti-chart-bar','ti-device-laptop'];
+
+    function save() {
+      localStorage.setItem('flashcards_data', JSON.stringify(topics));
+    }
+
+    function getTopic() {
+      return topics.find(t => t.id === currentTopicId);
+    }
+
+    function esc(s) {
+      return String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function cardWord(n) {
+      const mod10 = n % 10, mod100 = n % 100;
+      if (mod10 === 1 && mod100 !== 11) return 'а';
+      if ([2,3,4].includes(mod10) && ![12,13,14].includes(mod100)) return 'и';
+      return 'ек';
+    }
+
+    function renderTopics() {
+      const grid = document.getElementById('topics-grid');
+      if (!topics.length) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+          <i class="ti ti-stack-2"></i>
+          <p>Тем пока нет. Создайте первую.</p>
+        </div>`;
+        return;
+      }
+      grid.innerHTML = topics.map(t => {
+        const icon = ICONS[Math.abs((t.id || 0) % ICONS.length)];
+        const count = t.cards.length;
+        const pct = count ? Math.min(100, count * 10) : 0;
+        return `<div class="topic-card" onclick="openTopic(${t.id})">
+          <div class="topic-icon"><i class="ti ${icon}" aria-hidden="true"></i></div>
+          <div class="topic-name">${esc(t.name)}</div>
+          <div class="topic-count">${count} карточк${cardWord(count)}</div>
+          <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+          <div class="topic-footer">
+            <button class="del-btn" onclick="event.stopPropagation();deleteTopic(${t.id})" title="Удалить тему">
+              <i class="ti ti-trash" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function openTopic(id) {
+      currentTopicId = id;
+      document.getElementById('screen-topics').classList.remove('active');
+      document.getElementById('screen-cards').classList.add('active');
+      renderCards();
+    }
+
+    function showTopics() {
+      currentTopicId = null;
+      document.getElementById('screen-cards').classList.remove('active');
+      document.getElementById('screen-topics').classList.add('active');
+      renderTopics();
+    }
+
+    function renderCards() {
+      const topic = getTopic();
+      if (!topic) return;
+      document.getElementById('cards-screen-title').textContent = topic.name;
+      const count = topic.cards.length;
+      document.getElementById('cards-count-label').textContent =
+        count ? `${count} карточк${cardWord(count)}` : '';
+      const list = document.getElementById('cards-list');
+      if (!count) {
+        list.innerHTML = `<div class="empty-state">
+          <i class="ti ti-cards"></i>
+          <p>Карточек пока нет. Добавьте первую.</p>
+        </div>`;
+        return;
+      }
+      list.innerHTML = topic.cards.map(c => `
+        <div class="q-card" id="card-${c.id}">
+          <div class="q-card-header" onclick="toggleCard(${c.id})">
+            <span class="q-question">${esc(c.question)}</span>
+            <i class="ti ti-chevron-down q-chevron" aria-hidden="true"></i>
+          </div>
+          <div class="q-answer-wrap">
+            <div class="q-answer">
+              <div class="q-answer-label">Ответ</div>
+              <div class="q-answer-text">${esc(c.answer)}</div>
+              <div class="q-card-actions">
+                <button class="icon-btn" onclick="openEdit(${c.id})">
+                  <i class="ti ti-edit" aria-hidden="true"></i> Редактировать
+                </button>
+                <button class="icon-btn danger" onclick="deleteCard(${c.id})">
+                  <i class="ti ti-trash" aria-hidden="true"></i> Удалить
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleCard(id) {
+      document.getElementById('card-' + id).classList.toggle('open');
+    }
+
+    function openModal(mode) {
+      modalMode = mode;
+      editCardId = null;
+      document.getElementById('modal-overlay').classList.remove('hidden');
+      if (mode === 'topic') {
+        document.getElementById('modal-title').textContent = 'Новая тема';
+        document.getElementById('modal-confirm').textContent = 'Создать';
+        document.getElementById('modal-body').innerHTML = `
+          <label class="field-label">Название темы</label>
+          <input class="field-input" id="inp-topic" placeholder="например: Физика, Математика..." />
+        `;
+        setTimeout(() => document.getElementById('inp-topic').focus(), 60);
+      } else {
+        document.getElementById('modal-title').textContent = 'Новая карточка';
+        document.getElementById('modal-confirm').textContent = 'Добавить';
+        document.getElementById('modal-body').innerHTML = `
+          <label class="field-label">Вопрос</label>
+          <input class="field-input" id="inp-q" placeholder="Введите вопрос..." />
+          <label class="field-label">Ответ</label>
+          <textarea class="field-textarea" id="inp-a" placeholder="Введите подробный ответ..."></textarea>
+        `;
+        setTimeout(() => document.getElementById('inp-q').focus(), 60);
+      }
+    }
+
+    function openEdit(cardId) {
+      const card = getTopic().cards.find(c => c.id === cardId);
+      if (!card) return;
+      modalMode = 'edit';
+      editCardId = cardId;
+      document.getElementById('modal-overlay').classList.remove('hidden');
+      document.getElementById('modal-title').textContent = 'Редактировать карточку';
+      document.getElementById('modal-confirm').textContent = 'Сохранить';
+      document.getElementById('modal-body').innerHTML = `
+        <label class="field-label">Вопрос</label>
+        <input class="field-input" id="inp-q" value="${esc(card.question)}" />
+        <label class="field-label">Ответ</label>
+        <textarea class="field-textarea" id="inp-a">${esc(card.answer)}</textarea>
+      `;
+      setTimeout(() => document.getElementById('inp-q').focus(), 60);
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.add('hidden');
+      modalMode = null; editCardId = null;
+    }
+
+    function confirmModal() {
+      if (modalMode === 'topic') {
+        const name = document.getElementById('inp-topic').value.trim();
+        if (!name) return;
+        topics.push({ id: Date.now(), name, cards: [] });
+        save(); closeModal(); renderTopics();
+
+      } else if (modalMode === 'card') {
+        const q = document.getElementById('inp-q').value.trim();
+        const a = document.getElementById('inp-a').value.trim();
+        if (!q || !a) return;
+        getTopic().cards.push({ id: Date.now(), question: q, answer: a });
+        save(); closeModal(); renderCards();
+
+      } else if (modalMode === 'edit') {
+        const q = document.getElementById('inp-q').value.trim();
+        const a = document.getElementById('inp-a').value.trim();
+        if (!q || !a) return;
+        const card = getTopic().cards.find(c => c.id === editCardId);
+        card.question = q; card.answer = a;
+        save(); closeModal(); renderCards();
+      }
+    }
+
+    function deleteTopic(id) {
+      if (!confirm('Удалить тему и все её карточки?')) return;
+      topics = topics.filter(t => t.id !== id);
+      save(); renderTopics();
+    }
+
+    function deleteCard(id) {
+      if (!confirm('Удалить карточку?')) return;
+      getTopic().cards = getTopic().cards.filter(c => c.id !== id);
+      save(); renderCards();
+    }
+
+    document.getElementById('modal-overlay').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Enter' && modalMode === 'topic') confirmModal();
+    });
+
+    renderTopics();
+  </script>
+</body>
+</html>
