@@ -322,6 +322,15 @@
   <div class="container">
     <header class="app-header">
       <div class="app-logo"><i class="ti ti-cards" aria-hidden="true"></i> Карточки</div>
+      <div style="display:flex;gap:8px;">
+        <button class="add-btn" onclick="exportData()" title="Скачать данные как JSON файл">
+          <i class="ti ti-download" aria-hidden="true"></i> Экспорт
+        </button>
+        <button class="add-btn" onclick="document.getElementById('import-input').click()" title="Загрузить JSON файл с данными">
+          <i class="ti ti-upload" aria-hidden="true"></i> Импорт
+        </button>
+        <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)" />
+      </div>
     </header>
 
     <!-- Topics screen -->
@@ -570,6 +579,38 @@
       if (e.key === 'Escape') closeModal();
       if (e.key === 'Enter' && modalMode === 'topic') confirmModal();
     });
+
+    function exportData() {
+      const json = JSON.stringify(topics, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'flashcards_' + new Date().toISOString().slice(0,10) + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!Array.isArray(data)) throw new Error();
+          if (!confirm(`Импортировать ${data.length} тем? Текущие данные будут заменены.`)) return;
+          topics = data;
+          save();
+          showTopics();
+          renderTopics();
+        } catch {
+          alert('Ошибка: файл повреждён или имеет неверный формат.');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
 
     renderTopics();
   </script>
