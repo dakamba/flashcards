@@ -35,6 +35,10 @@
         --border: rgba(255,255,255,0.1);
         --border-secondary: rgba(255,255,255,0.18);
       }
+      
+      .btn-forgot, .tag.forgot { background: #7f1d1d !important; color: #fca5a5 !important; }
+      .btn-hard, .tag.hard { background: #713f12 !important; color: #fde047 !important; }
+      .btn-remembered, .tag.remembered { background: #14532d !important; color: #86efac !important; }
     }
 
     html { font-size: 16px; }
@@ -84,6 +88,8 @@
       transition: background 0.12s;
     }
     .add-btn:hover { background: var(--bg-secondary); }
+    .add-btn.primary { background: var(--text); color: var(--bg); border: none; }
+    .add-btn.primary:hover { opacity: 0.9; background: var(--text); }
 
     .back-btn {
       display: inline-flex;
@@ -107,7 +113,7 @@
       gap: 12px;
       margin-bottom: 1.5rem;
     }
-    .top-bar-title { font-size: 18px; font-weight: 500; }
+    .top-bar-title { font-size: 18px; font-weight: 500; flex: 1; }
 
     /* Topics grid */
     .topics-grid {
@@ -165,6 +171,20 @@
     .q-card-header:hover { background: var(--bg-secondary); }
 
     .q-question { font-size: 15px; line-height: 1.5; flex: 1; }
+    .q-tags { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+    
+    .tag {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .tag.forgot { background: #fee2e2; color: #991b1b; }
+    .tag.hard { background: #fef08a; color: #854d0e; }
+    .tag.remembered { background: #dcfce7; color: #166534; }
+
     .q-chevron {
       color: var(--text-tertiary);
       font-size: 16px;
@@ -223,6 +243,84 @@
     }
     .icon-btn:hover { background: var(--bg-secondary); border-color: var(--border-secondary); }
     .icon-btn.danger:hover { color: #c0392b; background: #fdf0ef; border-color: #f5c6c6; }
+
+    /* Study Mode */
+    .study-container {
+      max-width: 500px;
+      margin: 1rem auto 2rem;
+    }
+    .study-card {
+      background: var(--bg);
+      border: 1px solid var(--border-secondary);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem 2rem;
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+      margin-bottom: 1.5rem;
+      transition: transform 0.2s;
+    }
+    .study-card:active { transform: scale(0.98); }
+    .study-q {
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+    .study-a {
+      font-size: 16px;
+      color: var(--text);
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px dashed var(--border-secondary);
+      white-space: pre-wrap;
+      width: 100%;
+      text-align: left;
+      display: none;
+    }
+    .study-a.visible { display: block; }
+    
+    .study-controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+    .btn-status {
+      flex: 1;
+      padding: 12px 10px;
+      border-radius: var(--radius-md);
+      border: none;
+      font-weight: 500;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: var(--font);
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn-status:active { transform: scale(0.96); }
+    .btn-status:hover { opacity: 0.85; }
+    
+    .btn-forgot { background: #fee2e2; color: #991b1b; }
+    .btn-hard { background: #fef08a; color: #854d0e; }
+    .btn-remembered { background: #dcfce7; color: #166534; }
+
+    .study-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .study-nav button { flex: 1; justify-content: center; }
+    .hint-text {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-top: -10px;
+      margin-bottom: 20px;
+    }
 
     /* Empty state */
     .empty-state {
@@ -315,6 +413,7 @@
     @media (max-width: 480px) {
       .topics-grid { grid-template-columns: 1fr 1fr; }
       .q-answer-text { font-size: 14px; }
+      .study-controls { flex-direction: column; }
     }
   </style>
 </head>
@@ -333,7 +432,6 @@
       </div>
     </header>
 
-    <!-- Topics screen -->
     <div id="screen-topics" class="screen active">
       <div class="section-header">
         <span class="section-title">Мои темы</span>
@@ -344,7 +442,6 @@
       <div class="topics-grid" id="topics-grid"></div>
     </div>
 
-    <!-- Cards screen -->
     <div id="screen-cards" class="screen">
       <div class="top-bar">
         <button class="back-btn" onclick="showTopics()">
@@ -354,15 +451,54 @@
       </div>
       <div class="section-header">
         <span class="section-meta" id="cards-count-label"></span>
-        <button class="add-btn" onclick="openModal('card')">
-          <i class="ti ti-plus" aria-hidden="true"></i> Добавить карточку
-        </button>
+        <div style="display:flex;gap:8px;">
+          <button class="add-btn primary" onclick="startStudy()">
+            <i class="ti ti-player-play" aria-hidden="true"></i> Учить
+          </button>
+          <button class="add-btn" onclick="openModal('card')">
+            <i class="ti ti-plus" aria-hidden="true"></i> Добавить
+          </button>
+        </div>
       </div>
       <div class="cards-list" id="cards-list"></div>
     </div>
+
+    <div id="screen-study" class="screen">
+      <div class="top-bar">
+        <button class="back-btn" onclick="openTopic(currentTopicId)">
+          <i class="ti ti-arrow-left" aria-hidden="true"></i> К списку
+        </button>
+        <span class="top-bar-title">Режим изучения</span>
+        <span class="section-meta" id="study-progress"></span>
+      </div>
+      
+      <div class="study-container">
+        <div class="study-card" id="study-card" onclick="revealAnswer()">
+          <div class="study-q" id="study-question">Вопрос</div>
+          <div class="study-a" id="study-answer">Ответ</div>
+        </div>
+        
+        <div class="hint-text" id="study-hint">Нажмите на карточку, чтобы увидеть ответ</div>
+
+        <div class="study-controls" id="study-controls" style="display:none;">
+          <button class="btn-status btn-forgot" onclick="markCard('forgotten', false)">Не помню</button>
+          <button class="btn-status btn-hard" onclick="markCard('remembered', true)">Сложно</button>
+          <button class="btn-status btn-remembered" onclick="markCard('remembered', false)">Запомнил</button>
+        </div>
+
+        <div class="study-nav">
+          <button class="add-btn" onclick="prevStudyCard()" id="btn-prev-card">
+            <i class="ti ti-arrow-left" aria-hidden="true"></i> Назад
+          </button>
+          <button class="add-btn" onclick="nextStudyCard()" id="btn-next-card">
+            Вперед <i class="ti ti-arrow-right" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <!-- Modal -->
   <div class="modal-overlay hidden" id="modal-overlay">
     <div class="modal">
       <div class="modal-title" id="modal-title"></div>
@@ -379,9 +515,10 @@
     let currentTopicId = null;
     let modalMode = null;
     let editCardId = null;
-
-    const ICONS = ['ti-book','ti-math','ti-flask','ti-code','ti-language',
-                   'ti-history','ti-bulb','ti-world','ti-chart-bar','ti-device-laptop'];
+    
+    // Переменные для режима изучения
+    let studyCards = [];
+    let currentStudyIndex = 0;
 
     function save() {
       localStorage.setItem('flashcards_data', JSON.stringify(topics));
@@ -434,6 +571,7 @@
     function openTopic(id) {
       currentTopicId = id;
       document.getElementById('screen-topics').classList.remove('active');
+      document.getElementById('screen-study').classList.remove('active');
       document.getElementById('screen-cards').classList.add('active');
       renderCards();
     }
@@ -441,6 +579,7 @@
     function showTopics() {
       currentTopicId = null;
       document.getElementById('screen-cards').classList.remove('active');
+      document.getElementById('screen-study').classList.remove('active');
       document.getElementById('screen-topics').classList.add('active');
       renderTopics();
     }
@@ -453,6 +592,7 @@
       document.getElementById('cards-count-label').textContent =
         count ? `${count} карточк${cardWord(count)}` : '';
       const list = document.getElementById('cards-list');
+      
       if (!count) {
         list.innerHTML = `<div class="empty-state">
           <i class="ti ti-cards"></i>
@@ -460,10 +600,20 @@
         </div>`;
         return;
       }
-      list.innerHTML = topic.cards.map(c => `
+      list.innerHTML = topic.cards.map(c => {
+        // Рендер статусов карточки
+        let tagsHtml = '';
+        if (c.status === 'forgotten') tagsHtml += `<span class="tag forgot">Не помню</span>`;
+        if (c.isHard) tagsHtml += `<span class="tag hard">Сложно</span>`;
+        if (c.status === 'remembered' && !c.isHard) tagsHtml += `<span class="tag remembered">Запомнил</span>`;
+
+        return `
         <div class="q-card" id="card-${c.id}">
           <div class="q-card-header" onclick="toggleCard(${c.id})">
-            <span class="q-question">${esc(c.question)}</span>
+            <div style="flex: 1;">
+              <div class="q-question">${esc(c.question)}</div>
+              ${tagsHtml ? `<div class="q-tags">${tagsHtml}</div>` : ''}
+            </div>
             <i class="ti ti-chevron-down q-chevron" aria-hidden="true"></i>
           </div>
           <div class="q-answer-wrap">
@@ -481,12 +631,92 @@
             </div>
           </div>
         </div>
-      `).join('');
+      `}).join('');
     }
 
     function toggleCard(id) {
       document.getElementById('card-' + id).classList.toggle('open');
     }
+
+    /* --- Функции режима изучения --- */
+    function startStudy() {
+      const topic = getTopic();
+      if (!topic || topic.cards.length === 0) {
+        alert('В этой теме пока нет карточек для изучения.');
+        return;
+      }
+      
+      // Загружаем карточки
+      studyCards = topic.cards;
+      currentStudyIndex = 0;
+
+      document.getElementById('screen-cards').classList.remove('active');
+      document.getElementById('screen-study').classList.add('active');
+      
+      renderStudyCard();
+    }
+
+    function renderStudyCard() {
+      const card = studyCards[currentStudyIndex];
+      
+      // Обновляем прогресс
+      document.getElementById('study-progress').textContent = `${currentStudyIndex + 1} / ${studyCards.length}`;
+      
+      // Вставляем контент
+      document.getElementById('study-question').textContent = card.question;
+      document.getElementById('study-answer').textContent = card.answer;
+      
+      // Сбрасываем видимость
+      document.getElementById('study-answer').classList.remove('visible');
+      document.getElementById('study-controls').style.display = 'none';
+      document.getElementById('study-hint').style.display = 'block';
+
+      // Кнопки навигации (дизейбл если начало/конец)
+      document.getElementById('btn-prev-card').disabled = currentStudyIndex === 0;
+      document.getElementById('btn-prev-card').style.opacity = currentStudyIndex === 0 ? '0.5' : '1';
+      document.getElementById('btn-next-card').disabled = currentStudyIndex === studyCards.length - 1;
+      document.getElementById('btn-next-card').style.opacity = currentStudyIndex === studyCards.length - 1 ? '0.5' : '1';
+    }
+
+    function revealAnswer() {
+      // Показываем ответ если он еще скрыт
+      const answerEl = document.getElementById('study-answer');
+      if (!answerEl.classList.contains('visible')) {
+        answerEl.classList.add('visible');
+        document.getElementById('study-controls').style.display = 'flex';
+        document.getElementById('study-hint').style.display = 'none';
+      }
+    }
+
+    function nextStudyCard() {
+      if (currentStudyIndex < studyCards.length - 1) {
+        currentStudyIndex++;
+        renderStudyCard();
+      }
+    }
+
+    function prevStudyCard() {
+      if (currentStudyIndex > 0) {
+        currentStudyIndex--;
+        renderStudyCard();
+      }
+    }
+
+    function markCard(status, isHard) {
+      const card = studyCards[currentStudyIndex];
+      // Сохраняем статус и признак сложности
+      card.status = status;
+      card.isHard = isHard;
+      save(); // сохраняем прогресс
+
+      // Если есть следующая карточка, идем к ней, иначе показываем список
+      if (currentStudyIndex < studyCards.length - 1) {
+        nextStudyCard();
+      } else {
+        openTopic(currentTopicId); // возвращаемся к списку карточек если это последняя
+      }
+    }
+    /* ------------------------------ */
 
     function openModal(mode) {
       modalMode = mode;
@@ -546,7 +776,8 @@
         const q = document.getElementById('inp-q').value.trim();
         const a = document.getElementById('inp-a').value.trim();
         if (!q || !a) return;
-        getTopic().cards.push({ id: Date.now(), question: q, answer: a });
+        // status и isHard по умолчанию отсутствуют/false
+        getTopic().cards.push({ id: Date.now(), question: q, answer: a, status: 'new', isHard: false });
         save(); closeModal(); renderCards();
 
       } else if (modalMode === 'edit') {
@@ -603,7 +834,6 @@
           topics = data;
           save();
           showTopics();
-          renderTopics();
         } catch {
           alert('Ошибка: файл повреждён или имеет неверный формат.');
         }
@@ -611,6 +841,9 @@
       reader.readAsText(file);
       event.target.value = '';
     }
+
+    const ICONS = ['ti-book','ti-math','ti-flask','ti-code','ti-language',
+                   'ti-history','ti-bulb','ti-world','ti-chart-bar','ti-device-laptop'];
 
     renderTopics();
   </script>
